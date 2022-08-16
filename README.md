@@ -4,7 +4,7 @@ This Project is based on the research paper by Narinder Singh and S. B. Singh, "
 
 The main idea is to improve the ability of exploitation in Particle Swarm Optimization with the ability of exploration in Grey Wolf Optimizer to produce both variants’ strength.
 
-We have used 9 standard benchmark functions to evaluate the performance of this HPSOGWO. The results show that HPSOGWO is significantly better than the original version of GWO and PSO. The BPSOGWO improved the global optimum value in some of the functions, while in all the others, it reached the global optimum value in fewer iterations.
+We have used 9 standard benchmark functions to evaluate the performance of this HPSOGWO. The results show that HPSOGWO is significantly better than the original version of GWO and PSO. The HPSOGWO improved the global optimum value in some of the functions, while in all the others, it reached the global optimum value in fewer iterations.
 
 
 <br/>
