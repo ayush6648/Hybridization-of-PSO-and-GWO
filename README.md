@@ -14,4 +14,4 @@ benchmark.py file consist of 9 benchmark's function which can be used to evaluat
 
 <h3>How to Use:</h3>
 open plot.py file and set the value of variable " function_to_be_used " from F1 to F9 representing the 9 benchmark function.<br/>
-run plot.py file.
+run plot.py file. Use command - python ploy.py
