@@ -2,68 +2,71 @@ import numpy as np
 
 
 class PSO:
-    def __init__(self, fitness_func, c1=0.5, c2=0.5, dimension=30, pop_size=20, max_iter=100):
+    """Particle Swarm Optimization (PSO).
+
+    Implements the standard PSO with inertia weight as described in:
+    Shi, Y., & Eberhart, R. (1998). A modified particle swarm optimizer.
+    IEEE World Congress on Computational Intelligence, 69-73.
+    """
+
+    def __init__(self, fitness_func, c1=0.5, c2=0.5, dimension=30,
+                 pop_size=20, max_iter=100, lb=-100, ub=100):
         self.dimension = dimension
         self.pop_size = pop_size
         self.max_iter = max_iter
+        self.lb = lb
+        self.ub = ub
 
-        # Accelerations constants
-        self.c1 = c1  # cognitive constant (p_best)
-        self.c2 = c2  # social constant (g_best)
-        self.w = 0.9  # Inertia
+        self.c1 = c1    # cognitive constant (personal best)
+        self.c2 = c2    # social constant (global best)
+        self.w = 0.9    # inertia weight
 
-        self.cost_func = fitness_func  # Cost function
-        self.X = None  # Positions
-        self.V = None  # Velocities
-        self.p_best = None  # Particles best positions so far
-        self.g_best = None  # Global best position
+        self.cost_func = fitness_func
+        self.X = None       # positions
+        self.V = None       # velocities
+        self.p_best = None  # personal best positions
+        self.p_best_cost = None  # personal best costs (cached to avoid recomputation)
+        self.g_best = None  # global best position
+        self.g_best_cost = np.inf
 
-        # Keeps a list of g_best at each iteration to plot the evolution
         self.evolution = []
 
     def random_init(self):
-        self.X = np.random.rand(self.pop_size, self.dimension)
-        self.V = np.random.rand(self.pop_size, self.dimension)
-        # At first p_best is equal to first positions
-        self.p_best = np.copy(self.X)
-        # At first we consider that the X_1 is the global best
-        self.g_best = self.X[0]
+        self.X = np.random.uniform(self.lb, self.ub, (self.pop_size, self.dimension))
+        self.V = np.random.uniform(self.lb, self.ub, (self.pop_size, self.dimension))
+        self.p_best = self.X.copy()
+        self.p_best_cost = np.array([self.cost_func(x) for x in self.p_best])
 
-    def update_p_best(self):
-        for index, values in enumerate(self.X):
-            cost = self.cost_func(values)
-            if cost < self.cost_func(self.p_best[index]):
-                self.p_best[index] = values
+        best_idx = np.argmin(self.p_best_cost)
+        self.g_best = self.p_best[best_idx].copy()
+        self.g_best_cost = self.p_best_cost[best_idx]
 
-    def update_g_best(self):
-        for index, values in enumerate(self.p_best):
-            cost = self.cost_func(values)
-            if cost < self.cost_func(self.g_best):
-                self.g_best = values
+    def _update_bests(self):
+        costs = np.array([self.cost_func(x) for x in self.X])
+        improved = costs < self.p_best_cost
+        self.p_best[improved] = self.X[improved].copy()
+        self.p_best_cost[improved] = costs[improved]
 
-    def update_velocity(self):
-        r1 = np.random.random_sample()
-        r2 = np.random.random_sample()
-        self.V = (self.w * self.V +
-                  self.c1 * r1 * (self.p_best - self.X) +
-                  self.c2 * r2 * (self.g_best - self.X))
+        best_idx = np.argmin(self.p_best_cost)
+        if self.p_best_cost[best_idx] < self.g_best_cost:
+            self.g_best = self.p_best[best_idx].copy()
+            self.g_best_cost = self.p_best_cost[best_idx]
 
-    def update_positions(self):
-        self.X = self.X + self.V
+    def _update_velocity(self):
+        r1 = np.random.uniform(size=(self.pop_size, self.dimension))
+        r2 = np.random.uniform(size=(self.pop_size, self.dimension))
+        self.V = (
+            self.w * self.V
+            + self.c1 * r1 * (self.p_best - self.X)
+            + self.c2 * r2 * (self.g_best - self.X)
+        )
 
     def start(self):
-
-        i = 0
-        while i < self.max_iter:
-            self.update_p_best()
-            self.update_g_best()
-            self.update_velocity()
-            self.update_positions()
-
-            self.evolution.append(self.cost_func(self.g_best))
-
-            i += 1
+        for _ in range(self.max_iter):
+            self._update_bests()
+            self._update_velocity()
+            self.X = np.clip(self.X + self.V, self.lb, self.ub)
+            self.evolution.append(self.g_best_cost)
 
     def return_result(self):
-
         return np.array(self.evolution)
